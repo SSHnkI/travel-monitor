@@ -1,0 +1,204 @@
+# ============================================================
+# Config de exemplo usando WEB SCRAPING (provider: scraper)
+# Copie os destinos que quiser para o seu config.yaml.
+#
+# IMPORTANTE — leia antes de usar:
+#  - Os campos 'url' são modelos aproximados; confirme abrindo o site no navegador.
+#  - Os 'price_selector' estão marcados como "TODO": cada site usa classes próprias
+#    e elas MUDAM com frequência. Descubra o seletor correto rodando:
+#        python tools/inspect.py "<URL completa>" --wait-for "<seletor de container>"
+#    O script lista os elementos candidatos a preço e sugere seletores.
+#  - 'render_js: true' usa Playwright (instale: python -m playwright install chromium).
+#  - Sites com anti-bot forte (Google Flights, Booking, Skyscanner) podem bloquear
+#    o IP do GitHub Actions. Se isso ocorrer, rode localmente ou troque o destino.
+#  - Respeite os Termos de Uso de cada site e use baixa frequência.
+# ============================================================
+
+email:
+  enabled: true
+  smtp_host: smtp.gmail.com
+  smtp_port: 587
+  use_tls: true
+  username: seu_email@gmail.com
+  password: "sua_senha_de_app"
+  from_addr: seu_email@gmail.com
+  to_addrs:
+    - destinatario@exemplo.com
+
+settings:
+  history_file: data/history.json
+  log_dir: logs
+  log_level: INFO
+  min_drop_percent: 1.0
+
+destinations:
+  # ---------------- VOOS ----------------
+  - id: gflights-gru-sdu
+    type: flight
+    name: "Google Flights GRU -> SDU"
+    provider: scraper
+    params:
+      url: "https://www.google.com/travel/flights?q=Flights%20to%20{destination}%20from%20{origin}%20on%20{depart_date}"
+      origin: GRU
+      destination: SDU
+      depart_date: "2026-07-15"
+      render_js: true
+      wait_for: "[role='main']"
+      price_selector: "TODO"          # ex.: span[data-gs] ou div[role='listitem'] span
+      currency: BRL
+    max_price: 450.0
+
+  - id: skyscanner-gru-sdu
+    type: flight
+    name: "Skyscanner GRU -> SDU"
+    provider: scraper
+    params:
+      url: "https://www.skyscanner.com.br/transporte/passagens-aereas/{origin}/{destination}/{depart_date_compact}/"
+      origin: gru
+      destination: sdu
+      depart_date_compact: "260715"   # formato AAMMDD usado pela URL do Skyscanner
+      render_js: true
+      wait_for: "main"
+      price_selector: "TODO"          # ex.: span[class*='Price']
+      currency: BRL
+    max_price: 450.0
+
+  - id: kayak-gru-sdu
+    type: flight
+    name: "Kayak GRU -> SDU"
+    provider: scraper
+    params:
+      url: "https://www.kayak.com.br/flights/{origin}-{destination}/{depart_date}"
+      origin: GRU
+      destination: SDU
+      depart_date: "2026-07-15"
+      render_js: true
+      wait_for: "[class*='price']"
+      price_selector: "TODO"          # ex.: div[class*='price-text']
+      currency: BRL
+    max_price: 450.0
+
+  - id: momondo-gru-sdu
+    type: flight
+    name: "Momondo GRU -> SDU"
+    provider: scraper
+    params:
+      url: "https://www.momondo.com.br/flight-search/{origin}-{destination}/{depart_date}"
+      origin: GRU
+      destination: SDU
+      depart_date: "2026-07-15"
+      render_js: true
+      wait_for: "[class*='price']"
+      price_selector: "TODO"
+      currency: BRL
+    max_price: 450.0
+
+  - id: decolar-gru-sdu
+    type: flight
+    name: "Decolar GRU -> SDU"
+    provider: scraper
+    params:
+      url: "https://www.decolar.com/shop/flights/results/oneway/{origin}/{destination}/{depart_date}/1/0/0"
+      origin: GRU
+      destination: SDU
+      depart_date: "2026-07-15"
+      render_js: true
+      wait_for: "[class*='price']"
+      price_selector: "TODO"
+      currency: BRL
+    max_price: 450.0
+
+  - id: m123-gru-sdu
+    type: flight
+    name: "123milhas GRU -> SDU"
+    provider: scraper
+    params:
+      url: "https://123milhas.com/v2/busca?de={origin}&para={destination}&ida={depart_date}&adultos=1"
+      origin: GRU
+      destination: SDU
+      depart_date: "2026-07-15"
+      render_js: true
+      wait_for: "[class*='card']"
+      price_selector: "TODO"
+      currency: BRL
+    max_price: 450.0
+
+  # ---------------- HOSPEDAGEM ----------------
+  - id: booking-rio
+    type: hotel
+    name: "Booking Rio de Janeiro"
+    provider: scraper
+    params:
+      url: "https://www.booking.com/searchresults.pt-br.html?ss={city}&checkin={checkin}&checkout={checkout}&group_adults={guests}"
+      city: "Rio de Janeiro"
+      checkin: "2026-07-15"
+      checkout: "2026-07-20"
+      guests: 2
+      render_js: true
+      wait_for: "[data-testid='property-card']"
+      price_selector: "TODO"          # ex.: span[data-testid='price-and-discounted-price']
+      currency: BRL
+    max_price: 300.0
+
+  - id: airbnb-rio
+    type: hotel
+    name: "Airbnb Rio de Janeiro"
+    provider: scraper
+    params:
+      url: "https://www.airbnb.com.br/s/{city}/homes?checkin={checkin}&checkout={checkout}&adults={guests}"
+      city: "Rio-de-Janeiro"
+      checkin: "2026-07-15"
+      checkout: "2026-07-20"
+      guests: 2
+      render_js: true
+      wait_for: "[itemprop='itemListElement']"
+      price_selector: "TODO"          # ex.: span:has-text('total') / div[class*='_price']
+      currency: BRL
+    max_price: 300.0
+
+  - id: expedia-rio
+    type: hotel
+    name: "Expedia Rio de Janeiro"
+    provider: scraper
+    params:
+      url: "https://www.expedia.com.br/Hotel-Search?destination={city}&startDate={checkin}&endDate={checkout}"
+      city: "Rio de Janeiro"
+      checkin: "2026-07-15"
+      checkout: "2026-07-20"
+      render_js: true
+      wait_for: "[data-stid='property-listing-results']"
+      price_selector: "TODO"
+      currency: BRL
+    max_price: 300.0
+
+  # ---------------- RODOVIÁRIO ----------------
+  - id: clickbus-sp-rio
+    type: bus
+    name: "ClickBus SP -> RJ"
+    provider: scraper
+    params:
+      url: "https://www.clickbus.com.br/onibus/{origin}/{destination}?departureDate={depart_date}"
+      origin: "sao-paulo"
+      destination: "rio-de-janeiro"
+      depart_date: "2026-07-15"
+      render_js: true
+      wait_for: "[class*='trip']"
+      price_selector: "TODO"          # ex.: span[class*='price']
+      currency: BRL
+    max_price: 120.0
+
+  - id: busbud-sp-rio
+    type: bus
+    name: "Busbud SP -> RJ"
+    provider: scraper
+    params:
+      url: "https://www.busbud.com/pt-br/onibus-{origin}-{destination}/r/{route_code}?outbound_date={depart_date}"
+      origin: "sao-paulo"
+      destination: "rio-de-janeiro"
+      route_code: "dm88-dn0h"         # confirme o código da rota na URL do site
+      depart_date: "2026-07-15"
+      render_js: true
+      wait_for: "[class*='departure']"
+      price_selector: "TODO"
+      currency: BRL
+    max_price: 120.0

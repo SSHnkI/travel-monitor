@@ -1,0 +1,77 @@
+# ============================================================
+# Configuracao do Travel Monitor
+# Copie para config.yaml e ajuste. NAO comite config.yaml.
+#
+# Este exemplo ja vem com destinos REAIS funcionando via web scraping
+# (ClickBus e Booking), com seletores capturados e validados.
+# ============================================================
+
+# ---- E-mail (SMTP) ----
+# Em producao (GitHub Actions) use SECRETS. As variaveis de ambiente abaixo
+# tem prioridade sobre os valores daqui:
+#   SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_FROM, ALERT_TO
+email:
+  enabled: true
+  smtp_host: smtp.gmail.com
+  smtp_port: 587
+  use_tls: true
+  username: seu_email@gmail.com
+  password: "sua_senha_de_app"   # Gmail: gere uma "Senha de app"
+  from_addr: seu_email@gmail.com
+  to_addrs:
+    - destinatario@exemplo.com
+
+settings:
+  history_file: data/history.json
+  log_dir: logs
+  log_level: INFO
+  min_drop_percent: 1.0
+
+destinations:
+  # ---------------- RODOVIARIO: ClickBus (funciona bem no GitHub Actions) ----
+  # Para trocar a rota: abra o ClickBus, faca a busca uma vez e copie da URL
+  # os "slugs" de origem/destino (ex.: sao-paulo-sp-todos / rio-de-janeiro-rj-todos).
+  - id: clickbus-sp-rio
+    type: bus
+    name: "ClickBus Sao Paulo -> Rio de Janeiro (15/07)"
+    provider: scraper
+    params:
+      url: "https://www.clickbus.com.br/onibus/{origin}/{destination}?departureDate={depart_date}"
+      origin: "sao-paulo-sp-todos"
+      destination: "rio-de-janeiro-rj-todos"
+      depart_date: "2026-07-15"        # formato AAAA-MM-DD
+      render_js: true
+      wait_for: "[data-testid='price-container']"
+      price_selector: "[data-testid='price-container']"
+      currency: BRL
+    max_price: 120.0
+
+  # ---------------- HOSPEDAGEM: Booking ----
+  # Observacao: o preco do Booking e o TOTAL da estadia (nao por noite).
+  # Ajuste 'city' (use + no lugar de espacos), datas e max_price conforme desejar.
+  # Aviso: o Booking tem anti-bot; pode bloquear o IP do GitHub Actions.
+  # Se isso ocorrer, rode este destino localmente (ver README).
+  - id: booking-rio
+    type: hotel
+    name: "Booking Rio de Janeiro (15-20/07, 2 adultos)"
+    provider: scraper
+    params:
+      url: "https://www.booking.com/searchresults.pt-br.html?ss={city}&checkin={checkin}&checkout={checkout}&group_adults={guests}&no_rooms=1"
+      city: "Rio+de+Janeiro"
+      checkin: "2026-07-15"
+      checkout: "2026-07-20"
+      guests: 2
+      render_js: true
+      wait_for: "[data-testid='price-and-discounted-price']"
+      price_selector: "[data-testid='price-and-discounted-price']"
+      currency: BRL
+    max_price: 1500.0                   # TOTAL da estadia
+
+  # ---------------- Provedor de demonstracao (sem rede, util para teste) ----
+  # Descomente para testar o fluxo sem depender de nenhum site:
+  # - id: teste-mock
+  #   type: flight
+  #   name: "Teste (mock)"
+  #   provider: mock
+  #   params: {origin: GRU, destination: SDU, depart_date: "2026-07-15"}
+  #   max_price: 9999.0
